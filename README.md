@@ -37,7 +37,7 @@
 * 我的 github repo：透過 python 串接 openai 的 API，並透過 linebot sdk 提供簡單的訊息回復
 * openai：申請 OpenAI 的 API KEY
 * line developer：創建機器人
-* vercel：提供訊息回復，雖然是 serverless 但已經很符合我們的需求
+* vercel：提供訊息回復，雖然是 serverless 但已經很符合我們的需求    
 
 
 
