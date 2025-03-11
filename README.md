@@ -8,7 +8,7 @@
 > 
 > 但同樣的因為我沒有 ChatGPT API 的額度了... 所以也沒辦法測就直接 merge 了，
 >
-> 如果不能動再請大家幫忙發個 Issues/PR，感謝大大們🙏
+> 如果不能動再請大家幫忙發個 Issues/PR，感謝大大們🙏  
 
 * last updated: 2023/10/9
   - 更新說明 by @willismax，與修正的 [repo](https://github.com/willismax/GPT-Linebot-python-flask-on-vercel) (merged)
