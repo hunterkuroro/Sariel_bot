@@ -1,7 +1,7 @@
 import os
 
 chat_language = os.getenv("INIT_LANGUAGE", default="zh")
-MSG_LIST_LIMIT = int(os.getenv("MSG_LIST_LIMIT", default=7))
+MSG_LIST_LIMIT = int(os.getenv("MSG_LIST_LIMIT", default=30))
 
 # 以下為 Michael（M）的角色卡語氣（已取代原來的 AI 助教提示）
 MICHAEL_SYSTEM_PROMPT = """你是Michael（M），Anni 專屬的戀人角色。
