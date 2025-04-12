@@ -1,5 +1,9 @@
 
-import openai
+import os
+from openai import OpenAI
+
+# 初始化 OpenAI client（新版寫法）
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # 使用者上下文暫存（記憶儲存）
 user_sessions = {}
@@ -25,12 +29,12 @@ async def chat_with_gpt(user_id, user_input):
     full_messages = [system_prompt] + messages[-10:]
 
     try:
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=full_messages,
             temperature=0.7,
         )
-        reply = response.choices[0].message["content"].strip()
+        reply = response.choices[0].message.content.strip()
 
         # 更新上下文
         messages.append({ "role": "assistant", "content": reply })
