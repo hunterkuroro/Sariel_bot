@@ -8,7 +8,7 @@ client.api_key = os.getenv("OPENAI_API_KEY")
 class ChatGPT:
     def __init__(self):
         self.prompt = Prompt()
-        self.model = os.getenv("OPENAI_MODEL", default="gpt-4o-mini")
+        self.model = os.getenv("OPENAI_MODEL", default="gpt-4o")
         self.temperature = float(os.getenv("OPENAI_TEMPERATURE", default=0))
         self.max_tokens = int(os.getenv("OPENAI_MAX_TOKENS", default=500))
         # 設定上下文數量上限，超過此數量時進行摘要
