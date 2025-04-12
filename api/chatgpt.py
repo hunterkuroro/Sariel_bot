@@ -13,7 +13,7 @@ class ChatGPT:
         self.temperature = float(os.getenv("OPENAI_TEMPERATURE", default=0))
         self.max_tokens = int(os.getenv("OPENAI_MAX_TOKENS", default=1600))
         # 定義上下文保存的最大訊息數，超過此數量時觸發摘要
-        self.context_limit = int(os.getenv("CONTEXT_LIMIT", default=15))
+        self.context_limit = int(os.getenv("CONTEXT_LIMIT", default=20))
 
     def summarize_context(self, messages):
         """
