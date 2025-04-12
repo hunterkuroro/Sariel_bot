@@ -1,9 +1,35 @@
-from datetime import datetime
+from flask import Flask, request, abort
+from linebot import LineBotApi, WebhookHandler
+from linebot.exceptions import InvalidSignatureError
+from linebot.models import MessageEvent, TextMessage, TextSendMessage
+from api.chatgpt import ChatGPT
+import os
+
+line_bot_api = LineBotApi(os.getenv("LINE_CHANNEL_ACCESS_TOKEN"))
+line_handler = WebhookHandler(os.getenv("LINE_CHANNEL_SECRET"))
+working_status = os.getenv("DEFALUT_TALKING", default="true").lower() == "true"
+
+app = Flask(__name__)
+chatgpt = ChatGPT()
+
+@app.route('/')
+def home():
+    return 'Hello, World!'
+
+@app.route("/webhook", methods=['POST'])
+def callback():
+    signature = request.headers['X-Line-Signature']
+    body = request.get_data(as_text=True)
+    app.logger.info("Request body: " + body)
+    try:
+        line_handler.handle(body, signature)
+    except InvalidSignatureError:
+        abort(400)
+    return 'OK'
 
 @line_handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
     global working_status
-
     if event.message.type != "text":
         return
 
@@ -23,16 +49,6 @@ def handle_message(event):
         )
         return
 
-    if event.message.text == "早安":
-        working_status = True
-        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")  # 取得當前時間
-        reply_text = f"早安，目前時間：{now}"
-        line_bot_api.reply_message(
-            event.reply_token,
-            TextSendMessage(text=reply_text)
-        )
-        return
-
     if working_status:
         chatgpt.add_msg(f"HUMAN:{event.message.text}?\n")
         reply_msg = chatgpt.get_response().replace("AI:", "", 1)
@@ -41,3 +57,6 @@ def handle_message(event):
             event.reply_token,
             TextSendMessage(text=reply_msg)
         )
+
+if __name__ == "__main__":
+    app.run()
