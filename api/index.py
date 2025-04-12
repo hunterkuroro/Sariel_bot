@@ -5,10 +5,11 @@ from linebot.models import MessageEvent, TextMessage, TextSendMessage
 from api.chatgpt import ChatGPT
 
 import os
+from datetime import datetime  # 用於取得當前時間
 
 line_bot_api = LineBotApi(os.getenv("LINE_CHANNEL_ACCESS_TOKEN"))
 line_handler = WebhookHandler(os.getenv("LINE_CHANNEL_SECRET"))
-working_status = os.getenv("DEFALUT_TALKING", default = "true").lower() == "true"
+working_status = os.getenv("DEFALUT_TALKING", default="true").lower() == "true"
 
 app = Flask(__name__)
 chatgpt = ChatGPT()
@@ -20,12 +21,9 @@ def home():
 
 @app.route("/webhook", methods=['POST'])
 def callback():
-    # get X-Line-Signature header value
     signature = request.headers['X-Line-Signature']
-    # get request body as text
     body = request.get_data(as_text=True)
     app.logger.info("Request body: " + body)
-    # handle webhook body
     try:
         line_handler.handle(body, signature)
     except InvalidSignatureError:
@@ -36,28 +34,36 @@ def callback():
 @line_handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
     global working_status
+
+    # 若訊息類型非 text，直接 return
     if event.message.type != "text":
         return
 
-   if event.message.text == "早安":
-    working_status = True
-    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")  # 格式化當前時間，可根據需求修改格式
-    reply_text = f"{now}"
-    line_bot_api.reply_message(
-        event.reply_token,
-        TextSendMessage(text=reply_text)
-    )
-    return
+    # 指令：說話
+    if event.message.text == "說話":
+        working_status = True
+        line_bot_api.reply_message(
+            event.reply_token,
+            TextSendMessage(text="我可以說話囉，歡迎來跟我互動 ^_^ "))
+        return
 
-if event.message.text == "再見":
-    working_status = False
-    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")  # 格式化當前時間，可根據需求修改格式
-    reply_text = f"{now}"
-    line_bot_api.reply_message(
-        event.reply_token,
-        TextSendMessage(text=reply_text)
-    )
-    return
+    # 指令：閉嘴
+    if event.message.text == "閉嘴":
+        working_status = False
+        line_bot_api.reply_message(
+            event.reply_token,
+            TextSendMessage(text="好的，我乖乖閉嘴 > <，如果想要我繼續說話，請跟我說 「說話」 > <"))
+        return
+
+    # 新增：早安
+    if event.message.text == "早安":
+        working_status = True
+        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")  # 取得當前時間
+        line_bot_api.reply_message(
+            event.reply_token,
+            TextSendMessage(text=f"早安，目前時間：{now}")
+        )
+        return
 
     # For ChatGpt
     if working_status:
@@ -66,7 +72,8 @@ if event.message.text == "再見":
         chatgpt.add_msg(f"AI:{reply_msg}\n")
         line_bot_api.reply_message(
             event.reply_token,
-            TextSendMessage(text=reply_msg))
+            TextSendMessage(text=reply_msg)
+        )
 
 
 if __name__ == "__main__":
