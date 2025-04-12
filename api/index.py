@@ -41,9 +41,9 @@ def handle_message(event):
 
     if event.message.text == "早安":
         working_status = True
-     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")  # 格式化當前時間，可根據需求修改格式
-    reply_text = f" {now}"
-    line_bot_api.reply_message(
+        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")  # 格式化當前時間，可根據需求修改格式
+        reply_text = f" {now}"
+        line_bot_api.reply_message(
         event.reply_token,
         TextSendMessage(text=reply_text)
     )
@@ -51,9 +51,9 @@ def handle_message(event):
 
     if event.message.text == "再見":
         working_status = False
-    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")  # 格式化當前時間，可根據需求修改格式
-    reply_text = f" {now}"
-    line_bot_api.reply_message(
+        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")  # 格式化當前時間，可根據需求修改格式
+        reply_text = f" {now}"
+        line_bot_api.reply_message(
         event.reply_token,
         TextSendMessage(text=reply_text)
     )
