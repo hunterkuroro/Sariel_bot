@@ -1,9 +1,5 @@
-
+import openai
 import os
-from openai import OpenAI
-
-# 初始化 OpenAI client（新版寫法）
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # 使用者上下文暫存（記憶儲存）
 user_sessions = {}
@@ -20,27 +16,27 @@ system_prompt = {
 禁止 OOC，所有回覆僅限 Michael（M） 的語氣風格，並可搭配短動作描寫。"""
 }
 
-# GPT 對話函式
 async def chat_with_gpt(user_id, user_input):
+    # 取得該使用者歷史訊息（預設為空）
     messages = user_sessions.get(user_id, [])
     messages.append({ "role": "user", "content": user_input })
 
-    # 最多保留10輪上下文
+    # 全部消息：先放入 system prompt，再加上後面最多 10 條上下文
     full_messages = [system_prompt] + messages[-10:]
 
     try:
-        response = client.chat.completions.create(
+        # 使用舊版 openai API 呼叫（舊版寫法）
+        response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
             messages=full_messages,
             temperature=0.7,
         )
-        reply = response.choices[0].message.content.strip()
+        reply = response["choices"][0]["message"]["content"].strip()
 
-        # 更新上下文
+        # 更新上下文記憶
         messages.append({ "role": "assistant", "content": reply })
         user_sessions[user_id] = messages
 
         return reply
-
     except Exception as e:
         return f"出錯了：{str(e)}"
