@@ -1,6 +1,8 @@
 
 import openai
+import os
 
+openai.api_key = os.getenv("OPENAI_API_KEY")  # <- 這行非常重要
 # 使用者上下文暫存（記憶儲存）
 user_sessions = {}
 
