@@ -1,16 +1,17 @@
-
 import os
 from flask import Flask, request, abort
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, TextMessage, TextSendMessage
 
+from vercel_wsgi import make_handler
 from api.chatgpt import ChatGPT
 
 app = Flask(__name__)
+gpt = ChatGPT()
+
 line_bot_api = LineBotApi(os.getenv("LINE_CHANNEL_ACCESS_TOKEN"))
 handler = WebhookHandler(os.getenv("LINE_CHANNEL_SECRET"))
-gpt = ChatGPT()
 
 @app.route("/webhook", methods=["POST"])
 def webhook():
@@ -28,7 +29,6 @@ def webhook():
 def handle_message(event):
     user_text = event.message.text.strip()
 
-    # 支援 /摘要 指令
     if user_text == "/摘要":
         summary = gpt.prompt.get_last_summary()
         line_bot_api.reply_message(
@@ -37,10 +37,12 @@ def handle_message(event):
         )
         return
 
-    # 正常 GPT 對話流程
     gpt.prompt.add_msg(user_text)
     reply_text = gpt.get_response()
     line_bot_api.reply_message(
         event.reply_token,
         TextSendMessage(text=reply_text)
     )
+
+# Vercel 專用 handler
+handler = make_handler(app)
