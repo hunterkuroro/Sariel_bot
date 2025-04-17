@@ -1,4 +1,4 @@
-openai>=1.0.0
 flask
-python-dotenv
 line-bot-sdk
+openai>=1.0.0
+python-dotenv
