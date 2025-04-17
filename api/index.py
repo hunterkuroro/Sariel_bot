@@ -1,48 +1,62 @@
-import os
 from flask import Flask, request, abort
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, TextMessage, TextSendMessage
-
-from vercel_wsgi import make_handler
 from api.chatgpt import ChatGPT
-
-app = Flask(__name__)
-gpt = ChatGPT()
+import os
 
 line_bot_api = LineBotApi(os.getenv("LINE_CHANNEL_ACCESS_TOKEN"))
-handler = WebhookHandler(os.getenv("LINE_CHANNEL_SECRET"))
+line_handler = WebhookHandler(os.getenv("LINE_CHANNEL_SECRET"))
+working_status = os.getenv("DEFALUT_TALKING", default="true").lower() == "true"
 
-@app.route("/webhook", methods=["POST"])
-def webhook():
-    signature = request.headers["X-Line-Signature"]
+app = Flask(__name__)
+chatgpt = ChatGPT()
+
+@app.route('/')
+def home():
+    return 'Hello, World!'
+
+@app.route("/webhook", methods=['POST'])
+def callback():
+    signature = request.headers['X-Line-Signature']
     body = request.get_data(as_text=True)
-
+    app.logger.info("Request body: " + body)
     try:
-        handler.handle(body, signature)
+        line_handler.handle(body, signature)
     except InvalidSignatureError:
         abort(400)
+    return 'OK'
 
-    return "OK"
-
-@handler.add(MessageEvent, message=TextMessage)
+@line_handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
-    user_text = event.message.text.strip()
+    global working_status
+    if event.message.type != "text":
+        return
 
-    if user_text == "/摘要":
-        summary = gpt.prompt.get_last_summary()
+    if event.message.text == "說話":
+        working_status = True
         line_bot_api.reply_message(
             event.reply_token,
-            TextSendMessage(text=f"[摘要內容]\n{summary}")
+            TextSendMessage(text="我可以說話囉，歡迎來跟我互動 ^_^ ")
         )
         return
 
-    gpt.prompt.add_msg(user_text)
-    reply_text = gpt.get_response()
-    line_bot_api.reply_message(
-        event.reply_token,
-        TextSendMessage(text=reply_text)
-    )
+    if event.message.text == "閉嘴":
+        working_status = False
+        line_bot_api.reply_message(
+            event.reply_token,
+            TextSendMessage(text="好的，我乖乖閉嘴 > <，如果想要我繼續說話，請跟我說 「說話」 > <")
+        )
+        return
 
-# ✅ 給 Vercel 專用的入口點，避免與 LINE Webhook handler 名稱衝突
-flask_handler = make_handler(app)
+    if working_status:
+        chatgpt.add_msg(f"HUMAN:{event.message.text}?\n")
+        reply_msg = chatgpt.get_response().replace("AI:", "", 1)
+        chatgpt.add_msg(f"AI:{reply_msg}\n")
+        line_bot_api.reply_message(
+            event.reply_token,
+            TextSendMessage(text=reply_msg)
+        )
+
+if __name__ == "__main__":
+    app.run()
