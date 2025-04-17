@@ -1,62 +1,46 @@
+
+import os
 from flask import Flask, request, abort
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, TextMessage, TextSendMessage
-from api.chatgpt import ChatGPT
-import os
 
-line_bot_api = LineBotApi(os.getenv("LINE_CHANNEL_ACCESS_TOKEN"))
-line_handler = WebhookHandler(os.getenv("LINE_CHANNEL_SECRET"))
-working_status = os.getenv("DEFALUT_TALKING", default="true").lower() == "true"
+from api.chatgpt import ChatGPT
 
 app = Flask(__name__)
-chatgpt = ChatGPT()
+line_bot_api = LineBotApi(os.getenv("LINE_CHANNEL_ACCESS_TOKEN"))
+handler = WebhookHandler(os.getenv("LINE_CHANNEL_SECRET"))
+gpt = ChatGPT()
 
-@app.route('/')
-def home():
-    return 'Hello, World!'
-
-@app.route("/webhook", methods=['POST'])
-def callback():
-    signature = request.headers['X-Line-Signature']
+@app.route("/webhook", methods=["POST"])
+def webhook():
+    signature = request.headers["X-Line-Signature"]
     body = request.get_data(as_text=True)
-    app.logger.info("Request body: " + body)
+
     try:
-        line_handler.handle(body, signature)
+        handler.handle(body, signature)
     except InvalidSignatureError:
         abort(400)
-    return 'OK'
 
-@line_handler.add(MessageEvent, message=TextMessage)
+    return "OK"
+
+@handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
-    global working_status
-    if event.message.type != "text":
-        return
+    user_text = event.message.text.strip()
 
-    if event.message.text == "早安":
-        working_status = True
+    # 支援 /摘要 指令
+    if user_text == "/摘要":
+        summary = gpt.prompt.get_last_summary()
         line_bot_api.reply_message(
             event.reply_token,
-            TextSendMessage(text="早")
+            TextSendMessage(text=f"[摘要內容]\n{summary}")
         )
         return
 
-    if event.message.text == "再見":
-        working_status = False
-        line_bot_api.reply_message(
-            event.reply_token,
-            TextSendMessage(text="我等你回來")
-        )
-        return
-
-    if working_status:
-        chatgpt.add_msg(f"HUMAN:{event.message.text}?\n")
-        reply_msg = chatgpt.get_response().replace("AI:", "", 1)
-        chatgpt.add_msg(f"AI:{reply_msg}\n")
-        line_bot_api.reply_message(
-            event.reply_token,
-            TextSendMessage(text=reply_msg)
-        )
-
-if __name__ == "__main__":
-    app.run()
+    # 正常 GPT 對話流程
+    gpt.prompt.add_msg(user_text)
+    reply_text = gpt.get_response()
+    line_bot_api.reply_message(
+        event.reply_token,
+        TextSendMessage(text=reply_text)
+    )
