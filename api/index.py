@@ -44,5 +44,5 @@ def handle_message(event):
         TextSendMessage(text=reply_text)
     )
 
-# Vercel 專用 handler
-handler = make_handler(app)
+# ✅ 給 Vercel 專用的入口點，避免與 LINE Webhook handler 名稱衝突
+flask_handler = make_handler(app)
