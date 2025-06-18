@@ -1,6 +1,3 @@
-Prompt
-
-
 import os
 
 chat_language = os.getenv(“INIT_LANGUAGE”, default=“zh”)
